@@ -44,73 +44,79 @@ A RESTful API for managing e-commerce products built with Spring Boot, featuring
 ### Create Database
 ```sql
 CREATE DATABASE ecommerce_db;
+```
 
-Application Properties
-
+### Application Properties
+```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&serverTimezone=UTC
 spring.datasource.username=root
 spring.datasource.password=your_password
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+```
 
-How to Run
-Backend
-Clone the repository
+## How to Run
 
-Open in VS Code or IntelliJ IDEA
+### Backend
+1. Clone the repository
+2. Open in VS Code or IntelliJ IDEA
+3. Update `application.properties` with your MySQL credentials
+4. Run `EcommerceApiApplication.java` (green play button)
+5. The API will start at `http://localhost:8080`
 
-Update application.properties with your MySQL credentials
+### Frontend
+1. Open `signup.html` or `login.html` with Live Server
+2. Register a new user account
+3. Login with your credentials
+4. Browse products (guest access available)
 
-Run EcommerceApiApplication.java (green play button)
+## API Endpoints
 
-The API will start at http://localhost:8080
+### Public Endpoints (No Auth Required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/products` | Get all products |
+| GET | `/api/v1/products/{id}` | Get product by ID |
+| POST | `/api/auth/register` | Register a new user |
 
-Frontend
-Open signup.html or login.html with Live Server
+### Protected Endpoints (ADMIN only)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/products` | Create new product |
+| PUT | `/api/v1/products/{id}` | Update product |
+| DELETE | `/api/v1/products/{id}` | Delete product |
 
-Register a new user account
+## Sample Requests
 
-Login with your credentials
+### Register a User (POST)
+**URL:** `http://localhost:8080/api/auth/register`
 
-Browse products (guest access available)
-
-API Endpoints
-Public Endpoints (No Auth Required)
-Method	Endpoint	Description
-GET	/api/v1/products	Get all products
-GET	/api/v1/products/{id}	Get product by ID
-POST	/api/auth/register	Register a new user
-Protected Endpoints (ADMIN only)
-Method	Endpoint	Description
-POST	/api/v1/products	Create new product
-PUT	/api/v1/products/{id}	Update product
-DELETE	/api/v1/products/{id}	Delete product
-Sample Requests
-Register a User (POST)
-URL: http://localhost:8080/api/auth/register
-Body:
-
+**Body:**
+```json
 {
     "username": "newuser",
     "password": "password123",
     "role": "ROLE_USER"
 }
+```
 
-Response (201 Created):
-
+**Response (201 Created):**
+```json
 {
     "message": "User registered successfully!"
 }
+```
 
-Login
+### Login
 Use Basic Authentication with username and password. The server sets a JSESSIONID cookie.
 
-Create Product (ADMIN only)
-URL: http://localhost:8080/api/v1/products
-Headers: Content-Type: application/json
-Auth: Basic Auth (admin credentials)
-Body:
+### Create Product (ADMIN only)
+**URL:** `http://localhost:8080/api/v1/products`
+**Headers:** `Content-Type: application/json`
+**Auth:** Basic Auth (admin credentials)
 
+**Body:**
+```json
 {
     "name": "New Product",
     "description": "Product description",
@@ -119,25 +125,29 @@ Body:
     "stockQuantity": 10,
     "imageUrl": "product.jpg"
 }
+```
 
-Error Responses
-Authentication Failed (401)
+## Error Responses
 
+### Authentication Failed (401)
+```json
 {
     "status": 401,
     "error": "Unauthorized"
 }
+```
 
-Access Denied (403)
-
+### Access Denied (403)
+```json
 {
     "status": 403,
     "error": "Access Denied",
     "message": "You do not have permission to access this resource"
 }
+```
 
-Validation Error (400)
-
+### Validation Error (400)
+```json
 {
     "status": 400,
     "error": "Validation Failed",
@@ -146,58 +156,60 @@ Validation Error (400)
         "price": "Price must be greater than 0"
     }
 }
+```
 
-Database Schema
-Users Table
-Column	Type	Description
-id	BIGINT	Primary key (auto-increment)
-username	VARCHAR(255)	Unique username
-password	VARCHAR(255)	BCrypt hashed password
-role	VARCHAR(50)	ROLE_USER or ROLE_ADMIN
-Products Table
-Column	Type	Description
-id	BIGINT	Primary key (auto-increment)
-name	VARCHAR(100)	Product name
-description	VARCHAR(500)	Product description
-price	DOUBLE	Product price
-category	VARCHAR(100)	Category name
-stock_quantity	INT	Available stock
-image_url	VARCHAR(255)	Product image filename
-Screenshots
-Database Users Table
-https://screenshots/screenshot-db-users.png
+## Database Schema
 
-User Registration
-https://screenshots/screenshot-register.png
+### Users Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key (auto-increment) |
+| username | VARCHAR(255) | Unique username |
+| password | VARCHAR(255) | BCrypt hashed password |
+| role | VARCHAR(50) | ROLE_USER or ROLE_ADMIN |
 
-User Login
-https://screenshots/screenshot-login.png
+### Products Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGINT | Primary key (auto-increment) |
+| name | VARCHAR(100) | Product name |
+| description | VARCHAR(500) | Product description |
+| price | DOUBLE | Product price |
+| category | VARCHAR(100) | Category name |
+| stock_quantity | INT | Available stock |
+| image_url | VARCHAR(255) | Product image filename |
 
-Unauthorized DELETE (403)
-https://screenshots/screenshot-delete-403.png
+## Screenshots
 
-Frontend Integration
+### Database Users Table
+![Database Users](screenshots/screenshot-db-users.png)
+
+### User Registration
+![Registration](screenshots/screenshot-register.png)
+
+### User Login
+![Login](screenshots/screenshot-login.png)
+
+### Unauthorized DELETE (403)
+![Delete 403](screenshots/screenshot-delete-403.png)
+
+## Frontend Integration
+
 The frontend (separate repository) provides:
+- **Signup page** (`signup.html`) - User registration
+- **Login page** (`login.html`) - User authentication
+- **Products page** - Displays products with user greeting and logout button
 
-Signup page (signup.html) - User registration
+Credentials are stored in `sessionStorage` and sent with each API request using Basic Authentication.
 
-Login page (login.html) - User authentication
+## Known Limitations
+- Session-based authentication (not stateless JWT)
+- No password reset functionality
+- No email verification
+- Basic frontend UI (no framework)
 
-Products page - Displays products with user greeting and logout button
-
-Credentials are stored in sessionStorage and sent with each API request using Basic Authentication.
-
-Known Limitations
-Session-based authentication (not stateless JWT)
-
-No password reset functionality
-
-No email verification
-
-Basic frontend UI (no framework)
-
-Author
+## Author
 Balanquit, Junel M. & Balansag, Geraldine R.
 
-Submission Date
+## Submission Date
 May 2026
