@@ -17,10 +17,9 @@ A RESTful API for managing e-commerce products built with Spring Boot.
 - VS Code or IntelliJ IDEA
 
 ### Steps
-1. Clone the repository
-2. Open in VS Code
-3. Run `EcommerceApiApplication.java` (click green play button)
-4. The API will start at `http://localhost:8080`
+1. Open the project in VS Code
+2. Run `EcommerceApiApplication.java` (click the green play button)
+3. The API will start at `http://localhost:8080`
 
 ## API Endpoints
 
@@ -50,9 +49,10 @@ A RESTful API for managing e-commerce products built with Spring Boot.
     "stockQuantity": 10,
     "imageUrl": "watch.jpg"
 }
+```
 
-Response (201 Created):
-
+**Response (201 Created):**
+```json
 {
     "id": 11,
     "name": "Smart Watch Pro",
@@ -62,27 +62,29 @@ Response (201 Created):
     "stockQuantity": 10,
     "imageUrl": "watch.jpg"
 }
+```
 
-Get all products (GET)
-URL: http://localhost:8080/api/v1/products
+### Get all products (GET)
+**URL:** `http://localhost:8080/api/v1/products`
 
-Response (200 OK): Array of all products
+**Response (200 OK):** Array of all products
 
-Update a product (PUT)
-URL: http://localhost:8080/api/v1/products/1
+### Update a product (PUT)
+**URL:** `http://localhost:8080/api/v1/products/1`
 
-Headers: Content-Type: application/json
+**Headers:** `Content-Type: application/json`
 
-Body: (Complete product object)
+**Body:** Complete product object
 
-Delete a product (DELETE)
-URL: http://localhost:8080/api/v1/products/11
+### Delete a product (DELETE)
+**URL:** `http://localhost:8080/api/v1/products/11`
 
-Response: 204 No Content
+**Response:** 204 No Content
 
-Error Responses
-Product Not Found (404)
+## Error Responses
 
+### Product Not Found (404)
+```json
 {
     "timestamp": "2026-05-07T...",
     "status": 404,
@@ -90,9 +92,10 @@ Product Not Found (404)
     "message": "Product with ID 99 not found",
     "path": "/api/v1/products/99"
 }
+```
 
-Validation Error (400)
-
+### Validation Error (400)
+```json
 {
     "timestamp": "2026-05-07T...",
     "status": 400,
@@ -102,14 +105,15 @@ Validation Error (400)
         "price": "Price must be greater than 0"
     }
 }
+```
 
-Known Limitations
-In-memory storage only (data resets when server restarts)
+## Known Limitations
+- In-memory storage only (data resets when server restarts)
+- No authentication/authorization
+- No database connection
 
-No authentication/authorization
+## Author
+Balanquit, Junel M. & Balansag, Geraldine R.
 
-No database connection
-
-Author
-Balanquit, Junel M.
-Balansag, Geraldine R.
+## Submission Date
+May 2026
