@@ -1,25 +1,28 @@
 # Ecommerce API - Spring Boot REST API
 
 ## Overview
-A RESTful API for managing e-commerce products built with Spring Boot, featuring **Spring Security** with session-based authentication, role-based authorization, and MySQL database persistence.
+A complete RESTful API for managing e-commerce products built with Spring Boot, featuring **JWT Authentication**, role-based authorization, MySQL database persistence, and integrated frontend.
 
 ## Technologies Used
 - Java 21
 - Spring Boot 4.0.6
-- Spring Security (Session-based Auth)
+- Spring Security with JWT
 - Spring Data JPA
 - MySQL 8.0
 - Gradle
 - Lombok
 - Spring Validation
+- JJWT
 
 ## Security Features
 
-### Authentication (Session-Based)
+### Authentication (JWT - Stateless)
 - **User Registration:** `POST /api/auth/register`
-- **Login:** Form-based login with Basic Auth
+- **User Login:** `POST /api/auth/login` (returns JWT token)
+- **Token Storage:** Client stores token in localStorage
+- **Token Format:** Bearer token in Authorization header
+- **Token Expiration:** 24 hours
 - **Password Hashing:** BCrypt (10 rounds)
-- **Session Management:** HTTP Sessions with JSESSIONID cookie
 
 ### Authorization (Role-Based)
 | Role | Permissions |
@@ -35,6 +38,17 @@ A RESTful API for managing e-commerce products built with Spring Boot, featuring
 | `PUT /api/v1/products/{id}` | ADMIN only |
 | `DELETE /api/v1/products/{id}` | ADMIN only |
 | `POST /api/auth/register` | Public |
+| `POST /api/auth/login` | Public |
+
+## JWT Authentication Flow
+
+1. User registers → `POST /api/auth/register`
+2. User logs in → `POST /api/auth/login` with username/password
+3. Server validates credentials → Returns JWT token
+4. Client stores token in localStorage
+5. Client sends token in Authorization header: `Bearer <token>`
+6. Server validates token on each request
+7. Token expires after 24 hours → User must re-authenticate
 
 ## Database Setup
 
@@ -48,11 +62,22 @@ CREATE DATABASE ecommerce_db;
 
 ### Application Properties
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&serverTimezone=UTC
+spring.application.name=EcommerceApi
+
+spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 spring.datasource.username=root
 spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+server.port=8080
+
+jwt.secret=your-very-strong-secret-key-that-is-at-least-32-characters-long-for-hs256
+jwt.expiration=86400000
 ```
 
 ## How to Run
@@ -65,10 +90,12 @@ spring.jpa.show-sql=true
 5. The API will start at `http://localhost:8080`
 
 ### Frontend
-1. Open `signup.html` or `login.html` with Live Server
-2. Register a new user account
-3. Login with your credentials
-4. Browse products (guest access available)
+The frontend is served directly from the backend's `static` folder:
+1. Start the backend server
+2. Open browser to `http://localhost:8080/signup.html`
+3. Register a new user account
+4. Login at `http://localhost:8080/login.html`
+5. Browse products at `http://localhost:8080/products.html`
 
 ## API Endpoints
 
@@ -78,6 +105,7 @@ spring.jpa.show-sql=true
 | GET | `/api/v1/products` | Get all products |
 | GET | `/api/v1/products/{id}` | Get product by ID |
 | POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Login and get JWT token |
 
 ### Protected Endpoints (ADMIN only)
 | Method | Endpoint | Description |
@@ -107,13 +135,36 @@ spring.jpa.show-sql=true
 }
 ```
 
-### Login
-Use Basic Authentication with username and password. The server sets a JSESSIONID cookie.
+### Login (POST)
+**URL:** `http://localhost:8080/api/auth/login`
+
+**Body:**
+```json
+{
+    "username": "newuser",
+    "password": "password123"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "username": "newuser",
+    "role": "ROLE_USER",
+    "message": "Login successful"
+}
+```
+
+### Get Products with JWT (GET)
+**URL:** `http://localhost:8080/api/v1/products`
+
+**Headers:** `Authorization: Bearer <your-token-here>`
 
 ### Create Product (ADMIN only)
 **URL:** `http://localhost:8080/api/v1/products`
-**Headers:** `Content-Type: application/json`
-**Auth:** Basic Auth (admin credentials)
+
+**Headers:** `Content-Type: application/json`, `Authorization: Bearer <admin-token>`
 
 **Body:**
 ```json
@@ -133,7 +184,17 @@ Use Basic Authentication with username and password. The server sets a JSESSIONI
 ```json
 {
     "status": 401,
-    "error": "Unauthorized"
+    "error": "Unauthorized",
+    "message": "Invalid username or password"
+}
+```
+
+### Invalid Token (401)
+```json
+{
+    "status": 401,
+    "error": "Unauthorized",
+    "message": "JWT token is invalid or expired"
 }
 ```
 
@@ -143,6 +204,17 @@ Use Basic Authentication with username and password. The server sets a JSESSIONI
     "status": 403,
     "error": "Access Denied",
     "message": "You do not have permission to access this resource"
+}
+```
+
+### Product Not Found (404)
+```json
+{
+    "timestamp": "2026-05-07T...",
+    "status": 404,
+    "error": "Not Found",
+    "message": "Product with ID 99 not found",
+    "path": "/api/v1/products/99"
 }
 ```
 
@@ -195,18 +267,18 @@ Use Basic Authentication with username and password. The server sets a JSESSIONI
 
 ## Frontend Integration
 
-The frontend (separate repository) provides:
-- **Signup page** (`signup.html`) - User registration
-- **Login page** (`login.html`) - User authentication
-- **Products page** - Displays products with user greeting and logout button
+The frontend is served from `src/main/resources/static/` and includes:
+- **Signup page** (`/signup.html`) - User registration
+- **Login page** (`/login.html`) - User authentication (returns JWT)
+- **Products page** (`/products.html`) - Displays products with user greeting and role
 
-Credentials are stored in `sessionStorage` and sent with each API request using Basic Authentication.
+Credentials are stored in `localStorage` and sent with each API request using the Bearer token format.
 
 ## Known Limitations
-- Session-based authentication (not stateless JWT)
+- JWT tokens cannot be revoked until expiration
+- No refresh token mechanism
 - No password reset functionality
 - No email verification
-- Basic frontend UI (no framework)
 
 ## Author
 Balanquit, Junel M. & Balansag, Geraldine R.
